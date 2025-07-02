@@ -1,9 +1,7 @@
 import pandas as pd
-import logging
 from mostlyai.sdk import MostlyAI
 from .utils import calculate_accuracy
 
-logger = logging.getLogger(__name__)
 
 def train_generator(
         data: pd.DataFrame,
@@ -66,13 +64,13 @@ def get_synthetic_data(train_df, model_params):
 
     train_df_extended = train_df.copy(deep=True)
     na_columns = train_df_extended.columns[train_df_extended.isna().sum(axis=0) > 0].to_list()
-    logger.info(f"Add NA features for: {na_columns}")
+    print(f"Add NA features for: {na_columns}")
     for na_col in na_columns:
         na_tmp_col = f"is_na_{na_col}"
         train_df_extended[na_tmp_col] = train_df_extended[na_col].isna().astype(str)
 
     for i in range(iterations):
-        logger.info(f"Starting Training Iteration {i+1}/{iterations}")
+        print(f"Starting Training Iteration {i+1}/{iterations}")
 
         g = train_generator(
             data=train_df_extended,
@@ -80,7 +78,7 @@ def get_synthetic_data(train_df, model_params):
             mostly=mostly
         )
 
-        logger.info(f"Generating data with generator from iteration {i+1}")
+        print(f"Generating data with generator from iteration {i+1}")
         sd = mostly.generate(
             g,
             config={
@@ -96,12 +94,12 @@ def get_synthetic_data(train_df, model_params):
         synthetic_data_it = sd.data()
 
         accuracy_result = calculate_accuracy(train_df, synthetic_data_it.sample(model_params['train_size']))
-        logger.info(f"Accuracy for iteration {i+1}: {accuracy_result}")
+        print(f"Accuracy for iteration {i+1}: {accuracy_result}")
         synthetic_data_list.append(synthetic_data_it)
 
-    logger.info("Combining data from all iterations into the final pool.")
+    print("Combining data from all iterations into the final pool.")
     synthetic_data = pd.concat(synthetic_data_list)
     synthetic_data = synthetic_data[train_df.columns]
     accuracy = calculate_accuracy(train_df, synthetic_data.sample(model_params['train_size']))
-    logger.info(f"Final combined data pool accuracy: {accuracy}")
+    print(f"Final combined data pool accuracy: {accuracy}")
     return synthetic_data

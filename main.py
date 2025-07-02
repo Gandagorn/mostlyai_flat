@@ -4,11 +4,9 @@ import numpy as np
 import pandas as pd
 import argparse
 from datetime import datetime
-import logging
 
 from mostlyai import qa
 
-from pipeline.logging_utils import setup_logger
 from pipeline.training import get_synthetic_data
 from pipeline.postprocessing import select_rows_with_ipf_and_refinement
 from pipeline.utils import calculate_accuracy
@@ -44,10 +42,6 @@ if __name__ == '__main__':
     pool_file_name = os.path.join(pool_dir, f"flat_intermediate_pre_trained_pool_{timestamp}.csv")
     output_filename = os.path.join(results_dir, f"flat_result_{timestamp}.csv")
 
-    log_filename = os.path.join(results_dir, f"pipeline_{timestamp}.log")
-    logger = setup_logger('main_logger', log_filename)
-    logger.info(f"Starting pipeline with timestamp: {timestamp}")
-
     # Load data
     train_df = pd.read_csv(args.data_path)
     start_time = datetime.now()
@@ -77,7 +71,7 @@ if __name__ == '__main__':
     )
 
     if args.test:
-        logger.info("Testing mode enabled: Using smaller dataset and fewer iterations.")
+        print("Testing mode enabled: Using smaller dataset and fewer iterations.")
         model_params["train_size"] = 2000
         model_params["sample_size"] = 10000
         model_params["max_training_time"] = 2
@@ -89,14 +83,14 @@ if __name__ == '__main__':
 
     # Prepare training data based on size parameter
     train_df = train_df.copy(deep=True).iloc[:model_params["train_size"]]
-    logger.info(f"Training with {len(train_df)} Train Samples")
+    print(f"Training with {len(train_df)} Train Samples")
 
-    logger.info("--- STEP 1: Generating Synthetic Data Pool ---")
+    print("--- STEP 1: Generating Synthetic Data Pool ---")
     synthetic_data = get_synthetic_data(train_df=train_df, model_params=model_params)
     synthetic_data.to_csv(pool_file_name, index=False)
-    logger.info(f"Synthetic data pool saved to {pool_file_name}")
+    print(f"Synthetic data pool saved to {pool_file_name}")
 
-    logger.info("--- STEP 2: Selecting Best Subset via Post-processing ---")
+    print("--- STEP 2: Selecting Best Subset via Post-processing ---")
     synthetic_pool = pd.read_csv(pool_file_name)
     chosen_indices = select_rows_with_ipf_and_refinement(
         train_df=train_df,
@@ -110,7 +104,7 @@ if __name__ == '__main__':
     for c in train_df.columns:
         subset_df[c] = subset_df[c].astype(train_df[c].dtype)
 
-    logger.info("--- STEP 3: Final Evaluation ---")
+    print("--- STEP 3: Final Evaluation ---")
     before = calculate_accuracy(
         original_data=train_df,
         synthetic_data=synthetic_pool.sample(len(train_df)),
@@ -120,22 +114,22 @@ if __name__ == '__main__':
         synthetic_data=subset_df,
     )
 
-    logger.info("Accuracy of Initial Pool (Before):")
+    print("Accuracy of Initial Pool (Before):")
     for key, value in before.items():
-        logger.info(f"  - {key}: {value}")
+        print(f"  - {key}: {value}")
 
-    logger.info("Accuracy of Refined Subset (After):")
+    print("Accuracy of Refined Subset (After):")
     for key, value in after.items():
-        logger.info(f"  - {key}: {value}")
+        print(f"  - {key}: {value}")
 
-    logger.info("Quick Checks on Final Subset:")
-    logger.info(f"  - Size: {len(subset_df)}")
-    logger.info(f"  - All unique indices: {subset_df.index.is_unique}")
-    logger.info(f"  - All unique data points: {len(subset_df.drop_duplicates()) == len(subset_df)}")
+    print("Quick Checks on Final Subset:")
+    print(f"  - Size: {len(subset_df)}")
+    print(f"  - All unique indices: {subset_df.index.is_unique}")
+    print(f"  - All unique data points: {len(subset_df.drop_duplicates()) == len(subset_df)}")
 
-    logger.info("--- STEP 4: Storing Final Result ---")
+    print("--- STEP 4: Storing Final Result ---")
     subset_df.to_csv(output_filename, index=False)
-    logger.info(f"Final output saved to {output_filename}")
+    print(f"Final output saved to {output_filename}")
 
     duration = (datetime.now() - start_time).total_seconds() / 3600
-    logger.info(f"Pipeline completed successfully in {duration:.2f} hours.")
+    print(f"Pipeline completed successfully in {duration:.2f} hours.")

@@ -5,10 +5,8 @@ import psutil
 import os
 import sys
 import gc
-import logging
 from mostlyai.qa._accuracy import bin_data, calculate_univariates, calculate_bivariates, calculate_trivariates
 
-logger = logging.getLogger(__name__)
 
 def time_it(func):
     """Decorator to time a function's execution."""
@@ -16,7 +14,7 @@ def time_it(func):
         start_time = time.time()
         result = func(*args, **kwargs)
         end_time = time.time()
-        logger.info(f"Function '{func.__name__}' executed in {(end_time - start_time)/60:.2f} minutes.")
+        print(f"Function '{func.__name__}' executed in {(end_time - start_time)/60:.2f} minutes.")
         return result
     return wrapper
 
@@ -29,7 +27,7 @@ def print_memory_consumption():
     process = psutil.Process(os.getpid())
     memory_info = process.memory_info()
     rss_in_gb = memory_info.rss / (1024 * 1024 * 1024)
-    logger.info(f"Current memory consumption: {rss_in_gb:.2f} GB")
+    print(f"Current memory consumption: {rss_in_gb:.2f} GB")
 
 def calculate_accuracy(original_data, synthetic_data, variate_level=3):
     ori_bin, bins = bin_data(df=original_data, bins=10)

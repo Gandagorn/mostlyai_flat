@@ -4,14 +4,12 @@ from itertools import combinations
 import time
 import gc
 import sys
-import logging
 import warnings
 from typing import List, Dict, Tuple, Optional
 from sklearn.metrics import mutual_info_score
 from mostlyai.qa._accuracy import bin_data
 from .utils import time_it, print_memory_consumption, calculate_accuracy
 
-logger = logging.getLogger(__name__)
 
 def _make_spec(df: pd.DataFrame, bins: int = 10) -> Dict[str, Tuple]:
     spec = {}
@@ -162,13 +160,13 @@ def choose_rows_by_refinement(
         return np.arange(G)
 
     if initial_mask is not None and initial_mask.shape == (G,):
-        logger.info("Starting with the provided initial set...")
+        print("Starting with the provided initial set...")
         chosen_mask = initial_mask.copy()
         if chosen_mask.sum() != target_size:
             warnings.warn(
                 f"Provided initial_mask has {chosen_mask.sum()} items, but target_size is {target_size}. Refinement will proceed with {chosen_mask.sum()} items.")
     else:
-        logger.info("Starting with a random initial set...")
+        print("Starting with a random initial set...")
         chosen_mask = np.zeros(G, dtype=bool)
         initial_indices = np.random.choice(G, size=target_size, replace=False)
         chosen_mask[initial_indices] = True
@@ -193,13 +191,13 @@ def choose_rows_by_refinement(
                                 for j, c in enumerate(p_cols)]
 
     current_error = calculate_normalized_l1(current_hists, targets)
-    logger.info(f"Initial solution error (normalized): {current_error:.6f}")
+    print(f"Initial solution error (normalized): {current_error:.6f}")
 
     current_swap_size, min_swap_size, initial_temp = swap_size, 1, 0.00001
     is_trimming = swap_size_multiplier == 0
     for i in range(iterations):
         if max_time is not None and ((time.time() - start_time) / 60) > max_time:
-            logger.info(f"Refinement time limit of {max_time} minutes reached. Stopping early.")
+            print(f"Refinement time limit of {max_time} minutes reached. Stopping early.")
             break
 
         temperature = initial_temp * (1 - (i / iterations)) ** 2
@@ -248,20 +246,20 @@ def choose_rows_by_refinement(
         accepted = False
         if new_error < current_error:
             accepted = True
-            # logger.info(f"Iter {i + 1:3d}/{iterations}: ACCEPTED (IMPROVED) Swapped {current_swap_size}. Err: {current_error:.6f} -> {new_error:.6f}.")
+            # print(f"Iter {i + 1:3d}/{iterations}: ACCEPTED (IMPROVED) Swapped {current_swap_size}. Err: {current_error:.6f} -> {new_error:.6f}.")
         elif temperature > 1e-9 and np.exp((current_error - new_error) / temperature) > np.random.random():
             accepted = True
-            # logger.info(f"Iter {i + 1:3d}/{iterations}: ACCEPTED (ANNEALING) Swapped {current_swap_size}. Err: {current_error:.6f} -> {new_error:.6f}.")
+            # print(f"Iter {i + 1:3d}/{iterations}: ACCEPTED (ANNEALING) Swapped {current_swap_size}. Err: {current_error:.6f} -> {new_error:.6f}.")
 
         if accepted:
             if is_trimming:
                 num_current_groups = sum(chosen_mask)
-                # logger.info(f"Number of elements left: {num_current_groups} ({num_current_groups - target_size} to remove)")
+                # print(f"Number of elements left: {num_current_groups} ({num_current_groups - target_size} to remove)")
 
                 # check if we need to stop the loop in the trimming phase
                 if (num_current_groups - len(worst_indices)) <= target_size:
                     num_needed_groups = num_current_groups - target_size
-                    logger.info(f"Trimming stopped, remove last {num_needed_groups} elements")
+                    print(f"Trimming stopped, remove last {num_needed_groups} elements")
                     if num_needed_groups > 0:
                         needed_worst_indices = worst_indices[-num_needed_groups:]
                         chosen_mask[needed_worst_indices] = False
@@ -279,9 +277,9 @@ def choose_rows_by_refinement(
         if (i + 1) % 100 == 0:
             temp_subset_df = pool_df.iloc[np.where(chosen_mask)[0]]
             acc = calculate_accuracy(train_df, temp_subset_df)
-            logger.info(f"Iter {i + 1:4d}/{iterations}: Swap Size: {current_swap_size:3d}, Norm. L1 Err: {current_error:.6f}, Accuracy vs Original: {acc.get('overall_accuracy', 0):.6f}")
+            print(f"Iter {i + 1:4d}/{iterations}: Swap Size: {current_swap_size:3d}, Norm. L1 Err: {current_error:.6f}, Accuracy vs Original: {acc.get('overall_accuracy', 0):.6f}")
 
-    logger.info(f"Finished refinement in {time.time() - start_time:.2f} seconds.")
+    print(f"Finished refinement in {time.time() - start_time:.2f} seconds.")
     return np.where(chosen_mask)[0]
 
 
@@ -401,12 +399,12 @@ def select_rows_with_ipf_and_refinement(
     """
     target_size = len(train_df)
 
-    logger.info("--- Step 0: Binning data for IPF ---")
+    print("--- Step 0: Binning data for IPF ---")
     tr_int_bin, bins = bin_data(train_df, bins=10)
     pl_int_bin, _ = bin_data(synthetic_data, bins=bins)
     gc.collect()
 
-    logger.info(f"--- Step 1: Generating initial subset with IPF (top {ipf_top_pairs} pairs) ---")
+    print(f"--- Step 1: Generating initial subset with IPF (top {ipf_top_pairs} pairs) ---")
     trimming_size = int(target_size * trimming_data_multiplier)
     indices_from_ipf = ipf_pairs_full(
         train_bin=tr_int_bin,
@@ -417,14 +415,14 @@ def select_rows_with_ipf_and_refinement(
     del tr_int_bin, pl_int_bin
     gc.collect()
 
-    logger.info("--- Step 2: Preparing IPF result for refinement ---")
+    print("--- Step 2: Preparing IPF result for refinement ---")
     initial_mask = np.zeros(len(synthetic_data), dtype=bool)
     unique_indices = np.unique(indices_from_ipf)
-    logger.info(f"IPF returned {len(indices_from_ipf)} indices with {len(unique_indices)} unique ones.")
+    print(f"IPF returned {len(indices_from_ipf)} indices with {len(unique_indices)} unique ones.")
 
     initial_mask[unique_indices] = True
     if len(unique_indices) < target_size:
-        logger.warning(f"IPF produced {len(unique_indices)} unique rows, but target is {target_size}. Adding random rows to meet target size.")
+        print(f"IPF produced {len(unique_indices)} unique rows, but target is {target_size}. Adding random rows to meet target size.")
         num_needed = target_size - len(unique_indices)
         available_pool, = np.where(~initial_mask)
         if num_needed > len(available_pool):
@@ -432,14 +430,14 @@ def select_rows_with_ipf_and_refinement(
         random_fill = np.random.choice(available_pool, size=num_needed, replace=False)
         initial_mask[random_fill] = True
 
-    logger.info("--- Accuracy of IPF-selected subset (before refinement) ---")
+    print("--- Accuracy of IPF-selected subset (before refinement) ---")
     ipf_subset_df = synthetic_data[initial_mask]
     ipf_accuracy = calculate_accuracy(train_df, ipf_subset_df)
-    logger.info(f"Overall accuracy: {ipf_accuracy['overall_accuracy']}")
+    print(f"Overall accuracy: {ipf_accuracy['overall_accuracy']}")
     del ipf_subset_df, ipf_accuracy
     gc.collect()
 
-    logger.info("--- Step 3: Trimming the subset ---")
+    print("--- Step 3: Trimming the subset ---")
     trimming_indices = choose_rows_by_refinement(
         train_df=train_df,
         pool_df=synthetic_data,
@@ -453,28 +451,28 @@ def select_rows_with_ipf_and_refinement(
         max_time=max_trimming_time
     )
 
-    logger.info(f"--- Accuracy of Trimming subset (subset size {len(trimming_indices)}) ---")
+    print(f"--- Accuracy of Trimming subset (subset size {len(trimming_indices)}) ---")
     if len(trimming_indices) > target_size:
-        logger.info(f"Too many indices returned from trimming - sample to match target size: {target_size}")
+        print(f"Too many indices returned from trimming - sample to match target size: {target_size}")
         trimming_indices = np.random.choice(trimming_indices, target_size, replace=False)
 
     subset_df = synthetic_data.iloc[trimming_indices]
     acc = calculate_accuracy(train_df, subset_df)
-    logger.info(f"Overall accuracy: {acc['overall_accuracy']}")
+    print(f"Overall accuracy: {acc['overall_accuracy']}")
 
     unique_indices = np.unique(trimming_indices)
     initial_mask = np.zeros(len(synthetic_data), dtype=bool)
     initial_mask[unique_indices] = True
-    logger.info(f"Trimming returned {len(trimming_indices)} indices with {len(unique_indices)} unique ones.")
+    print(f"Trimming returned {len(trimming_indices)} indices with {len(unique_indices)} unique ones.")
 
-    logger.info("--- Step 4: Refining the subset ---")
+    print("--- Step 4: Refining the subset ---")
     print_memory_consumption()
     refinement_size = len(unique_indices)
     refinement_train = train_df
     if refinement_size > len(train_df):
         refinement_train = pd.concat(
             [refinement_train, refinement_train.sample(refinement_size - len(train_df), replace=True)])
-    logger.info(f"Using train set with len {len(refinement_train)} rows to align to refinement target size {refinement_size}.")
+    print(f"Using train set with len {len(refinement_train)} rows to align to refinement target size {refinement_size}.")
 
     final_indices = choose_rows_by_refinement(
         train_df=refinement_train,
@@ -489,11 +487,11 @@ def select_rows_with_ipf_and_refinement(
     gc.collect()
 
     if len(final_indices) > target_size:
-        logger.info(f"Trimming final set from {len(final_indices)} to {target_size}")
+        print(f"Trimming final set from {len(final_indices)} to {target_size}")
         final_indices = np.random.choice(final_indices, size=target_size, replace=False)
     elif len(final_indices) < target_size:
         num_needed = target_size - len(final_indices)
-        logger.info(f"Padding final set with {num_needed} random rows to reach {target_size}")
+        print(f"Padding final set with {num_needed} random rows to reach {target_size}")
 
         current_mask = np.zeros(len(synthetic_data), dtype=bool)
         current_mask[final_indices] = True
