@@ -33,7 +33,6 @@ This pipeline was designed to be robust, efficient, and adaptable, making it a s
 
       * **Low Memory Footprint**: By converting data into binned, integer-based representations, the algorithms operate with very low memory overhead. The core computations rely on efficient NumPy operations, avoiding the need to hold multiple large DataFrames in memory.
       * **CPU-Friendly Refinement**: While the initial model training benefits from a GPU, the post-processing does not need a GPU.
-      * **Parallelizable**: The core refinement logic—evaluating row swaps can be parallelized for .
 
   * **Enhanced Privacy Guarantees**: By selecting from a vast, pre-generated pool based on aggregate statistical distributions (up to the trivariate level), the risk of replicated individual records or their sensitive combinations is minimal. The final dataset copies the *statistical patterns* of the original data, not the data points themselves, ensuring privacy-safe output.
 
@@ -66,7 +65,7 @@ Execute the script, providing the full path to the training data CSV file as an 
 
 The script will:
 
-1.  Check for `uv` (a fast Python package installer) and install it if not present.
+1.  Check for `uv` and install it if not present.
 2.  Create a local virtual environment in a `.venv` directory.
 3.  Install all required Python packages from `requirements.txt`.
 4.  Activate the virtual environment.
