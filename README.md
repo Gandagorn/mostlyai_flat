@@ -41,6 +41,7 @@ This pipeline was designed to be robust, efficient, and adaptable, making it a s
   - **Python**: 3.10+
   - **GPU Environment**: This submission should run with a GPU in an **`g5.2xlarge`** instance.
   - **AWS AMI**: The `Deep Learning Base OSS Nvidia Driver GPU AMI (Ubuntu 24.04)` was used for testing this solution.
+  - **Disk Space**: To be on the safe side, a minimum of **75 GB** of disk space is recommended.
   - **NVIDIA Driver**: Before running, ensure the NVIDIA driver is correctly installed by executing `nvidia-smi`.
 
 ## Setup & Usage
