@@ -105,6 +105,7 @@ if __name__ == '__main__':
         subset_df[c] = subset_df[c].astype(train_df[c].dtype)
 
     print("--- STEP 3: Final Evaluation ---")
+    print("Using Local Validation Metrics")
     before = calculate_accuracy(
         original_data=train_df,
         synthetic_data=synthetic_pool.sample(len(train_df)),

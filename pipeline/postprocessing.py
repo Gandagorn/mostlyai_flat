@@ -277,7 +277,7 @@ def choose_rows_by_refinement(
         if (i + 1) % 100 == 0:
             temp_subset_df = pool_df.iloc[np.where(chosen_mask)[0]]
             acc = calculate_accuracy(train_df, temp_subset_df)
-            print(f"Iter {i + 1:4d}/{iterations}: Swap Size: {current_swap_size:3d}, Norm. L1 Err: {current_error:.6f}, Accuracy vs Original: {acc.get('overall_accuracy', 0):.6f}")
+            print(f"Iter {i + 1:4d}/{iterations}: Swap Size: {current_swap_size:3d}, Num Elements {len(temp_subset_df)}, Norm. L1 Err: {current_error:.6f}, Accuracy vs Original: {acc.get('overall_accuracy', 0):.6f}")
 
     print(f"Finished refinement in {time.time() - start_time:.2f} seconds.")
     return np.where(chosen_mask)[0]
