@@ -51,7 +51,7 @@ if __name__ == '__main__':
         batch_size=1024,
         gradient_accumulation_steps=1,
         enable_flexible_generation=False,
-        value_protection=False,
+        value_protection=True,
         max_epochs=17,
         max_training_time=60,  # 1 hour
         train_iterations=2,
