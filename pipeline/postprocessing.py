@@ -334,7 +334,8 @@ def ipf_pairs_full(
         dj = train_bin.iloc[:, j].cat.categories.size
         tgt = np.zeros((di, dj), float)
         np.add.at(tgt, (codes_tr[:, i], codes_tr[:, j]), 1.0)
-        tgt *= (k_final / n_tr) / tgt.sum()
+        tgt += 1e-9
+        tgt = tgt / tgt.sum() * k_final
         targets[(i, j)] = tgt
 
     # IPF
@@ -342,7 +343,6 @@ def ipf_pairs_full(
     for _ in range(max_iter):
         delta = 0.0
         for (i, j), tgt in targets.items():
-            di, dj = tgt.shape
             cur = np.zeros_like(tgt)
             np.add.at(cur, (codes_pl[:, i], codes_pl[:, j]), w)
             scale = np.divide(tgt, cur, out=np.ones_like(cur), where=cur > 0)
