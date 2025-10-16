@@ -421,12 +421,12 @@ def select_rows_with_ipf_and_refinement(
     print(f"IPF returned {len(indices_from_ipf)} indices with {len(unique_indices)} unique ones.")
 
     initial_mask[unique_indices] = True
-    if len(unique_indices) < target_size:
-        print(f"IPF produced {len(unique_indices)} unique rows, but target is {target_size}. Adding random rows to meet target size.")
-        num_needed = target_size - len(unique_indices)
+    if len(unique_indices) < trimming_size:
+        print(f"IPF produced {len(unique_indices)} unique rows, but trimming_size is {trimming_size}. Adding random rows to meet trimming_size.")
+        num_needed = trimming_size - len(unique_indices)
         available_pool, = np.where(~initial_mask)
         if num_needed > len(available_pool):
-            raise ValueError("Not enough unique rows in the entire synthetic data pool to meet target_size.")
+            raise ValueError("Not enough unique rows in the entire synthetic data pool to meet trimming_size.")
         random_fill = np.random.choice(available_pool, size=num_needed, replace=False)
         initial_mask[random_fill] = True
 
