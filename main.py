@@ -61,6 +61,7 @@ if __name__ == '__main__':
 
     postprocessing_params = dict(
         ipf_top_pairs=5000,
+        refinement_swapsize=100,
         refinement_iterations=500,
         refinement_top_pairs=500,
         refinement_top_triples=25,

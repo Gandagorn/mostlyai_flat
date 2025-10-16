@@ -376,6 +376,7 @@ def select_rows_with_ipf_and_refinement(
         synthetic_data: pd.DataFrame,
         ipf_top_pairs: int,
         refinement_top_pairs: int,
+        refinement_swapsize: int,
         refinement_top_triples: int,
         refinement_iterations: int,
         trimming_data_multiplier: float,
@@ -480,6 +481,7 @@ def select_rows_with_ipf_and_refinement(
         target_size=refinement_size,
         iterations=refinement_iterations,
         initial_mask=initial_mask,
+        swap_size=refinement_swapsize,
         top_k_pairs=refinement_top_pairs,
         top_k_triples=refinement_top_triples,
         max_time=max_refinement_time
