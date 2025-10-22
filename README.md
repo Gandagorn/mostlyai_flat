@@ -1,4 +1,4 @@
-#  \textbf{I}terative \textbf{S}ubset \textbf{S}election from \textbf{O}versampled \textbf{SYNTH}etic data (ISSOSYNTH)
+#  Iterative Subset Selection from Oversampled SYNTHetic data (ISSOSYNTH)
 
 This approach consists of a multi-stage pipeline that first generates a large, diverse pool of synthetic data and then uses a post-processing strategy to select an optimal subset.
 
